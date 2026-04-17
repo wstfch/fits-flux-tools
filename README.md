@@ -13,6 +13,12 @@ Small command-line tools for measuring integrated flux density from FITS images.
 pip install .
 ```
 
+## Uninstall
+
+```bash
+pip uninstall fits-flux-tools
+```
+
 ## Dependencies
 
 - `numpy`
