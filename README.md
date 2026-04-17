@@ -10,6 +10,7 @@ Small command-line tools for measuring integrated flux density from FITS images.
 ## Installation
 
 ```bash
+git clone https://github.com/wstfch/fits-flux-tools.git
 cd fits-flux-tools
 pip install .
 ```
