@@ -10,6 +10,7 @@ Small command-line tools for measuring integrated flux density from FITS images.
 ## Installation
 
 ```bash
+cd fits-flux-tools
 pip install .
 ```
 
@@ -32,29 +33,29 @@ pip uninstall fits-flux-tools
 Create masks:
 
 ```bash
-polymask PN.i.image.fits
+polymask NGC253.i.image.fits
 ```
 
 Measure integrated flux density in the current directory:
 
 ```bash
-cal-int-flux-density PN.i.image.fits
+cal-int-flux-density NGC253.i.image.fits
 ```
 
 Measure with explicit calibration error and path:
 
 ```bash
-cal-int-flux-density PN.i.image.fits --percent 0.02 --path /path/to/data
+cal-int-flux-density NGC253.i.image.fits --percent 0.02 --path /path/to/data
 ```
 
 ## Expected Files
 
-For an input image `PN.i.image.fits`, `cal-int-flux-density` expects:
+For an input image `NGC253.i.image.fits`, `cal-int-flux-density` expects:
 
-- `PN.i.image.mask.source.fk5.reg`
-- `PN.i.image.mask.bakg.fk5.reg`
-- `PN.i.image.mask_source.fits`
-- `PN.i.image.mask_bakg.fits`
+- `NGC253.i.image.mask.source.fk5.reg`
+- `NGC253.i.image.mask.bakg.fk5.reg`
+- `NGC253.i.image.mask_source.fits`
+- `NGC253.i.image.mask_bakg.fits`
 
 Output files are written to the selected `--path` directory:
 
