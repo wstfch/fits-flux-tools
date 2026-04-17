@@ -1,4 +1,4 @@
-!/usr/bin/env python
+#!/usr/bin/env python
 # Author: Xiaohui Sun
 #=============================================================================#
 # NAME:     polyMask.py                                                       #
