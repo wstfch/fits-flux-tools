@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+!/usr/bin/env python
+# Author: Xiaohui Sun
 #=============================================================================#
 # NAME:     polyMask.py                                                       #
 #                                                                             #
@@ -6,8 +7,7 @@
 #           save polygons to a text file.                                     #
 #                                                                             #
 # WRITTEN:  Cormac Purcell                                                    #
-# MODIFIED: Xiaohui Sun                                                       #
-# PACKAGED: Shengtao Wang                                                     #
+# MODIFIED: Shengtao Wang                                                     #
 #                                                                             #
 #=============================================================================#
 import os, sys, re
@@ -65,12 +65,12 @@ def main():
     cbar=colorbar(cax,pad=0.0)
 
     # Add the buttons to the bottom edge
-    axreset = axes([0.49, 0.025, 0.1, 0.04])
-    axsave = axes([0.71, 0.025, 0.1, 0.04])
-    axmask = axes([0.60, 0.025, 0.1, 0.04])
+    axreset = axes([0.18, 0.025, 0.12, 0.04])
+    axsave_src = axes([0.35, 0.025, 0.18, 0.04])
+    axsave_bkg = axes([0.57, 0.025, 0.22, 0.04])
     breset = Button(axreset, 'Reset')
-    bsave = Button(axsave, 'Save')
-    bmask = Button(axmask, 'Mask')
+    bsave_src = Button(axsave_src, 'Save Source')
+    bsave_bkg = Button(axsave_bkg, 'Save Background')
 
     #------------------------ Polygon editor class ---------------------------#
 
@@ -188,60 +188,42 @@ def main():
         def doreset(self, event):
             self.update('reset')
 
-        # Save a FITS mask
-        def dosavemask(self, event):
-            
-            # Strip the '.fits' to form the datfile name
+        def save_outputs(self, stem):
+            if len(self.offsetsLol) != 1:
+                print("Please draw exactly one polygon before saving.")
+                return
+
             suffix = '.fits'
             if fitsName.endswith(suffix):
                 nameRoot = fitsName[:-len(suffix)]
             else:
                 nameRoot = fitsName
 
-            i = 0
-            for e in self.offsetsLol:
-                i += 1
-                indices = get_pix_in_poly(e,xydata)
-                mask = np.zeros_like(xydata)
-                for x,y in indices:
+            poly = self.offsetsLol[0]
+            indices = get_pix_in_poly(poly,xydata)
+            mask = np.zeros_like(xydata)
+            for x,y in indices:
+                if 0 <= y < mask.shape[0] and 0 <= x < mask.shape[1]:
                     mask[y,x]=1.0
-                
-                if not os.path.isfile(os.path.join('./', nameRoot + '.mask_source' + '.fits')):
-                    outName = nameRoot + '.mask_source' + '.fits'
-                else:
-                    outName = nameRoot + '.mask_bakg' + '.fits'
-                    
-                print("\nSaving mask to file '%s' ... "% outName)
-                sys.stdout.flush()
-                pf.writeto(outName, mask, header, overwrite=True)
-                print("done.")
-                sys.stdout.flush()
-                
-            
-        # Save the measurements to a file
-        def dosavefile(self, event):
-            # Base name
-            suffix = '.fits'
-            if fitsName.endswith(suffix):
-                nameRoot = fitsName[:-len(suffix)]
-            else:
-                nameRoot = fitsName
 
-            # If first running source, else bkg
-            if not os.path.isfile(os.path.join('./', nameRoot + '.mask.source.image.reg')):
-                stem = '.mask.source'
+            if stem == '.mask.source':
+                outName = nameRoot + '.mask_source.fits'
             else:
-                stem = '.mask.bakg'
+                outName = nameRoot + '.mask_bakg.fits'
+
+            print("\nSaving mask to file '%s' ... "% outName)
+            sys.stdout.flush()
+            pf.writeto(outName, mask, header, overwrite=True)
+            print("done.")
+            sys.stdout.flush()
 
             # ---------- 1) write to image coord .reg（pixel value，DS9 image，1-based） ----------
             img_reg = nameRoot + f'{stem}.image.reg'
             with open(img_reg, 'w') as f:
                 f.write('# Region file format: DS9 version 4.1\n')
                 f.write('image\n')  # using DS9 image coord
-                for poly in self.offsetsLol:
-                    # DS9 image coord from 1 as start point，so x,y that +1
-                    pts = ','.join(f'{x+1:.2f},{y+1:.2f}' for x, y in poly)
-                    f.write(f'polygon({pts})\n')
+                pts = ','.join(f'{x+1:.2f},{y+1:.2f}' for x, y in poly)
+                f.write(f'polygon({pts})\n')
 
             # ---------- 2) write to wcs coord .reg（fk5 or galactic） ----------
             ctype1 = header.get('CTYPE1', '').upper()
@@ -257,16 +239,20 @@ def main():
             with open(wld_reg, 'w') as f:
                 f.write('# Region file format: DS9 version 4.1\n')
                 f.write(f'{world_sys}\n')  # fk5 or galactic
-                for poly in self.offsetsLol:
-                    # Convert to wcs coord （unit：degree）
-                    world = w.wcs_pix2world(np.array(poly), 0)  # Nx2 数组
-                    pts = ','.join(f'{a:.7f},{b:.7f}' for a, b in world)
-                    f.write(f'polygon({pts})\n')
+                world = w.wcs_pix2world(np.array(poly), 0)  # Nx2 数组
+                pts = ','.join(f'{a:.7f},{b:.7f}' for a, b in world)
+                f.write(f'polygon({pts})\n')
 
             print("Saved DS9 region files:")
             print("  ", img_reg)
             print("  ", wld_reg)
             print("done.")
+
+        def dosave_source(self, event):
+            self.save_outputs('.mask.source')
+
+        def dosave_background(self, event):
+            self.save_outputs('.mask.bakg')
 
 #-----------------------------------------------------------------------------#
 
@@ -274,8 +260,8 @@ def main():
     editor = ThreePolyEditor()
     fig.canvas.mpl_connect('button_press_event', editor.onclick)
     breset.on_clicked(editor.doreset)
-    bsave.on_clicked(editor.dosavefile)
-    bmask.on_clicked(editor.dosavemask)
+    bsave_src.on_clicked(editor.dosave_source)
+    bsave_bkg.on_clicked(editor.dosave_background)
 
     # Draw the plot to the screen
     show()
@@ -412,3 +398,4 @@ def load_fits_image(filename):
 
 if __name__ == "__main__":
     main()
+
