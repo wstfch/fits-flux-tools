@@ -11,7 +11,6 @@ import numpy as np
 from astropy.io import fits as pf
 from astropy.wcs.utils import proj_plane_pixel_area
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Calculate integrated flux density from a FITS image and masks.")
     parser.add_argument("filename", help="FITS image filename, for example 'PN.i.image.fits'.")
@@ -146,12 +145,7 @@ def main():
     bkg_values = xydata[bkg_select]
 
     pixel_area_sr = proj_plane_pixel_area(w_cel) * (np.pi / 180.0) ** 2
-    beam_area_sr = (
-        np.pi
-        * np.radians(header["BMAJ"])
-        * np.radians(header["BMIN"])
-        / (4.0 * np.log(2.0))
-    )
+    beam_area_sr = (np.pi * np.radians(header["BMAJ"]) * np.radians(header["BMIN"]) / (4.0 * np.log(2.0)))
     src_area_sr = num * pixel_area_sr
     bkg_area_sr = num_bkg * pixel_area_sr
     nsrc_beam = src_area_sr / beam_area_sr
@@ -192,16 +186,10 @@ def main():
 
     with open(int_flux_data_name, "a+") as f:
         print(filename + ":", file=f)
-        print(
-            "{0:<8.4f}{1:8.4f}{2:10.6f}{3:8.4f}".format(
-                int_flux, int_flux_bg, sigma, sigma_tot
-            ),
-            file=f,
-        )
+        print("{0:<8.4f}{1:8.4f}{2:10.6f}{3:8.4f}".format(int_flux, int_flux_bg, sigma, sigma_tot), file=f)
 
     run_time = time.time() - start_time
     print("Run time is:", run_time)
-
 
 if __name__ == "__main__":
     main()
