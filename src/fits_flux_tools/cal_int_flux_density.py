@@ -7,43 +7,24 @@ import os
 import re
 import sys
 import time
-
 import astropy.wcs as wcs
 import numpy as np
 from astropy import units as u
 from astropy.io import fits as pf
 from sphericalpolygon import Sphericalpolygon
 
-
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Calculate integrated flux density from a FITS image and masks."
-    )
-    parser.add_argument(
-        "filename",
-        help="FITS image filename, for example 'PN.i.image.fits'.",
-    )
-    parser.add_argument(
-        "-p",
-        "--percent",
-        type=float,
-        default=0.05,
-        help="Relative calibration error, for example 0.02.",
-    )
-    parser.add_argument(
-        "--path",
-        default=".",
-        help="Directory containing the FITS file and mask files. Default: current directory.",
-    )
+    parser = argparse.ArgumentParser(description="Calculate integrated flux density from a FITS image and masks.")
+    parser.add_argument("filename", help="FITS image filename, for example 'PN.i.image.fits'.",)
+    parser.add_argument("-p", "--percent", type=float, default=0.05, help="Relative calibration error, for example 0.02.",)
+    parser.add_argument("--path", default=".", help="Directory containing the FITS file and mask files. Default: current directory.",)
     return parser.parse_args()
-
 
 def polygon_line_to_list(line):
     match = re.search(r"polygon\s*\((.*?)\)", line, re.IGNORECASE)
     if not match:
         raise ValueError("No polygon(...) definition found in region file.")
     return np.array([float(value) for value in match.group(1).split(",")])
-
 
 def load_fits_image(filename):
     header = pf.getheader(filename)
@@ -61,31 +42,8 @@ def load_fits_image(filename):
     else:
         raise ValueError(f"Data array contains {naxis} axes; only up to 5 are supported.")
 
-    strip_head_keys = [
-        "NAXIS",
-        "CRVAL",
-        "CRPIX",
-        "CDELT",
-        "CTYPE",
-        "CROTA",
-        "CD1_",
-        "CD2_",
-        "CUNIT",
-        "PC1_",
-        "PC2_",
-        "PC3_",
-        "PC4_",
-    ]
-    strip_head_keys1 = [
-        "PC1_",
-        "PC2_",
-        "PC3_",
-        "PC4_",
-        "PC01_",
-        "PC02_",
-        "PC03_",
-        "PC04_",
-    ]
+    strip_head_keys = ["NAXIS", "CRVAL", "CRPIX", "CDELT", "CTYPE", "CROTA", "CD1_", "CD2_", "CUNIT", "PC1_", "PC2_", "PC3_", "PC4_",]
+    strip_head_keys1 = ["PC1_", "PC2_", "PC3_", "PC4_", "PC01_", "PC02_", "PC03_", "PC04_",]
     if naxis >= 3:
         for i in range(3, 6):
             for key in strip_head_keys:
@@ -142,7 +100,6 @@ def load_fits_image(filename):
         pass
 
     return header, xydata
-
 
 def main():
     args = parse_args()
@@ -273,13 +230,8 @@ def main():
 
     with open(int_flux_data_name, "a+") as f:
         print(filename + ":", file=f)
-        print(
-            "{0:<8.4f}{1:8.4f}{2:10.6f}{3:8.4f}".format(
-                int_flux, int_flux_bg, sigma, sigma_tot
-            ),
-            file=f,
-        )
-
+        print("{0:<8.4f}{1:8.4f}{2:10.6f}{3:8.4f}".format(int_flux, int_flux_bg, sigma, sigma_tot), file=f,)
+        
     run_time = time.time() - start_time
     print("Run time is:", run_time)
 
