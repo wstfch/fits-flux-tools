@@ -5,26 +5,19 @@
 import argparse
 import os
 import re
-import sys
 import time
 import astropy.wcs as wcs
 import numpy as np
-from astropy import units as u
 from astropy.io import fits as pf
-from sphericalpolygon import Sphericalpolygon
+from astropy.wcs.utils import proj_plane_pixel_area
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Calculate integrated flux density from a FITS image and masks.")
-    parser.add_argument("filename", help="FITS image filename, for example 'PN.i.image.fits'.",)
-    parser.add_argument("-p", "--percent", type=float, default=0.05, help="Relative calibration error, for example 0.02.",)
-    parser.add_argument("--path", default=".", help="Directory containing the FITS file and mask files. Default: current directory.",)
+    parser.add_argument("filename", help="FITS image filename, for example 'PN.i.image.fits'.")
+    parser.add_argument("-p", "--percent", type=float, default=0.05, help="Relative calibration error, for example 0.02.")
+    parser.add_argument("--path", default=".", help="Directory containing the FITS file and mask files. Default: current directory.")
     return parser.parse_args()
-
-def polygon_line_to_list(line):
-    match = re.search(r"polygon\s*\((.*?)\)", line, re.IGNORECASE)
-    if not match:
-        raise ValueError("No polygon(...) definition found in region file.")
-    return np.array([float(value) for value in match.group(1).split(",")])
 
 def load_fits_image(filename):
     header = pf.getheader(filename)
@@ -42,8 +35,8 @@ def load_fits_image(filename):
     else:
         raise ValueError(f"Data array contains {naxis} axes; only up to 5 are supported.")
 
-    strip_head_keys = ["NAXIS", "CRVAL", "CRPIX", "CDELT", "CTYPE", "CROTA", "CD1_", "CD2_", "CUNIT", "PC1_", "PC2_", "PC3_", "PC4_",]
-    strip_head_keys1 = ["PC1_", "PC2_", "PC3_", "PC4_", "PC01_", "PC02_", "PC03_", "PC04_",]
+    strip_head_keys = ["NAXIS", "CRVAL", "CRPIX", "CDELT", "CTYPE", "CROTA", "CD1_", "CD2_", "CUNIT"]
+    strip_head_keys1 = ["PC1_", "PC2_", "PC3_", "PC4_", "PC01_", "PC02_", "PC03_", "PC04_"]
     if naxis >= 3:
         for i in range(3, 6):
             for key in strip_head_keys:
@@ -98,8 +91,8 @@ def load_fits_image(filename):
         header["CDELT" + str(y_indx)] = ydelt
     except Exception:
         pass
-
     return header, xydata
+
 
 def main():
     args = parse_args()
@@ -114,8 +107,6 @@ def main():
 
     filename = fits_filename[:-5]
     fits_name = os.path.join(base_path, fits_filename)
-    src_mask_name = os.path.join(base_path, filename + ".mask.source.fk5.reg")
-    bkg_mask_name = os.path.join(base_path, filename + ".mask.bakg.fk5.reg")
     src_mask_fits_name = os.path.join(base_path, filename + ".mask_source.fits")
     bkg_mask_fits_name = os.path.join(base_path, filename + ".mask_bakg.fits")
     all_data_name = os.path.join(base_path, "all.data")
@@ -130,108 +121,84 @@ def main():
         header["BPA"] = float(input("BPA in deg: "))
 
     w = wcs.WCS(header)
+    w_cel = w.celestial if w.has_celestial else w
+
+    if "BUNIT" in header:
+        print("BUNIT:", header["BUNIT"])
+    else:
+        print("Warning: BUNIT not found in FITS header. This script assumes the image is in Jy/beam.")
 
     src_mask_fits = pf.getdata(src_mask_fits_name)
     bkg_mask_fits = pf.getdata(bkg_mask_fits_name)
 
-    with open(src_mask_name, "r") as f:
-        src_line = next(ln for ln in f if "polygon" in ln.lower())
-    src_mask = polygon_line_to_list(src_line)
+    finite_mask = np.isfinite(xydata)
+    src_select = finite_mask & (src_mask_fits >= 0.5)
+    bkg_select = finite_mask & (bkg_mask_fits >= 0.5)
 
-    with open(bkg_mask_name, "r") as f:
-        bkg_line = next(ln for ln in f if "polygon" in ln.lower())
-    bkg_mask = polygon_line_to_list(bkg_line)
+    num = int(np.count_nonzero(src_select))
+    num_bkg = int(np.count_nonzero(bkg_select))
+    if num == 0:
+        raise ValueError("No valid pixels found in source mask.")
+    if num_bkg < 2:
+        raise ValueError("Not enough valid pixels found in background mask.")
 
-    src_mask = np.reshape(np.flip(src_mask), (src_mask.size // 2, 2))
-    bkg_mask = np.reshape(np.flip(bkg_mask), (bkg_mask.size // 2, 2))
+    src_values = xydata[src_select]
+    bkg_values = xydata[bkg_select]
 
-    polygon_src = Sphericalpolygon.from_array(src_mask * u.deg)
-    polygon_bkg = Sphericalpolygon.from_array(bkg_mask * u.deg)
-
-    m_size, n_size = xydata.shape
+    pixel_area_sr = proj_plane_pixel_area(w_cel) * (np.pi / 180.0) ** 2
+    beam_area_sr = (
+        np.pi
+        * np.radians(header["BMAJ"])
+        * np.radians(header["BMIN"])
+        / (4.0 * np.log(2.0))
+    )
+    src_area_sr = num * pixel_area_sr
+    bkg_area_sr = num_bkg * pixel_area_sr
+    nsrc_beam = src_area_sr / beam_area_sr
+    nbkg_beam = bkg_area_sr / beam_area_sr
 
     with open(all_data_name, "a+") as f1:
         print(file=f1)
         print(filename + ":", file=f1)
-        print("total area: ", polygon_src.area(), file=f1)
+        print("total area (sr): ", src_area_sr, file=f1)
+        print("total area (beam): ", nsrc_beam, file=f1)
 
-    num_bkg = 0
-    tot_bkg = 0.0
-    tot_bkg2 = 0.0
-    for i in range(m_size):
-        for j in range(n_size):
-            if np.isnan(xydata[i, j]):
-                continue
-            if bkg_mask_fits[i, j] < 0.5:
-                continue
-            x = w.wcs_pix2world([(j, i)], 0)
-            ra = x[0][0]
-            dec = x[0][1]
-            if polygon_bkg.contains_points([dec, ra]):
-                tot_bkg += xydata[i, j]
-                tot_bkg2 += xydata[i, j] * xydata[i, j]
-                num_bkg += 1
-
-    ave_bkg = tot_bkg / num_bkg
-    rms = np.sqrt(tot_bkg2 / num_bkg - ave_bkg * ave_bkg)
+    ave_bkg = float(np.mean(bkg_values))
+    sigma = float(np.std(bkg_values, ddof=1))
 
     with open(all_data_name, "a+") as f1:
         print("bkg: ", ave_bkg, file=f1)
-        print("rms: ", rms, file=f1)
+        print("rms: ", sigma, file=f1)
 
-    num = 0
-    tot_flux = 0.0
-    tot_flux_bkg = 0.0
-    for i in range(m_size):
-        for j in range(n_size):
-            if np.isnan(xydata[i, j]):
-                continue
-            if src_mask_fits[i, j] < 0.5:
-                continue
-            x = w.wcs_pix2world([(j, i)], 0)
-            ra = x[0][0]
-            dec = x[0][1]
-            if polygon_src.contains_points([dec, ra]):
-                tot_flux += xydata[i, j]
-                tot_flux_bkg += xydata[i, j] - ave_bkg
-                num += 1
+    sum_src = float(np.sum(src_values))
+    int_flux = sum_src * pixel_area_sr / beam_area_sr
+    int_flux_bg = float(np.sum(src_values - ave_bkg)) * pixel_area_sr / beam_area_sr
 
-    beam_norm = 1.13 * np.radians(header["BMAJ"]) * np.radians(header["BMIN"])
-    int_flux = tot_flux * ((polygon_src.area() / num) / beam_norm)
-    int_flux_bg = tot_flux_bkg * ((polygon_src.area() / num) / beam_norm)
-
-    beam_area = np.pi * np.radians(header["BMAJ"]) * np.radians(header["BMIN"])
-    n_num_indep = polygon_src.area() / beam_area
-    print("N_num:", n_num_indep)
-
-    p_mu2_sum = 0.0
-    for i in range(m_size):
-        for j in range(n_size):
-            if np.isnan(xydata[i, j]):
-                continue
-            if bkg_mask_fits[i, j] < 0.5:
-                continue
-            x = w.wcs_pix2world([(j, i)], 0)
-            ra = x[0][0]
-            dec = x[0][1]
-            if polygon_bkg.contains_points([dec, ra]):
-                p_mu2_sum += (xydata[i, j] - ave_bkg) ** 2
-
-    sigma = np.sqrt(p_mu2_sum / num_bkg)
+    print("N_src_beam:", nsrc_beam)
+    print("N_bkg_beam:", nbkg_beam)
     print("sigma:", sigma)
-    sigma_n = sigma * np.sqrt(n_num_indep)
+
+    sigma_n = sigma * np.sqrt(nsrc_beam + (nsrc_beam ** 2) / nbkg_beam)
     print("sigma_N:", sigma_n)
-    sigma_s = int_flux * percent
+    sigma_s = abs(int_flux_bg) * percent
     print("sigma_S:", sigma_s)
     sigma_tot = np.sqrt(sigma_n ** 2 + sigma_s ** 2)
 
     with open(all_data_name, "a+") as f1:
         print("Number of points: ", num, file=f1)
+        print("Number of background points: ", num_bkg, file=f1)
+        print("N_src_beam: ", nsrc_beam, file=f1)
+        print("N_bkg_beam: ", nbkg_beam, file=f1)
 
     with open(int_flux_data_name, "a+") as f:
         print(filename + ":", file=f)
-        print("{0:<8.4f}{1:8.4f}{2:10.6f}{3:8.4f}".format(int_flux, int_flux_bg, sigma, sigma_tot), file=f,)
-        
+        print(
+            "{0:<8.4f}{1:8.4f}{2:10.6f}{3:8.4f}".format(
+                int_flux, int_flux_bg, sigma, sigma_tot
+            ),
+            file=f,
+        )
+
     run_time = time.time() - start_time
     print("Run time is:", run_time)
 
