@@ -63,5 +63,5 @@ Output files are written to the selected `--path` directory:
 
 - `all.data`
 - `IntFlux.data`  
-Note: The first and second columns are the integrated flux densities before and after background-noise subtraction, respectively. The third column gives the background noise, and the fourth column gives the uncertainty, including both the telescope’s relative calibration uncertainty and the image rms noise.
+Note: The first and second columns are the integrated flux densities before and after background subtraction, respectively. The third column gives the local image rms measured from the background region, and the fourth column gives the total uncertainty, including both the relative calibration uncertainty and the image-noise term.
 
