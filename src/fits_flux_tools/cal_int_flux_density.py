@@ -168,15 +168,21 @@ def main():
     int_flux = sum_src * pixel_area_sr / beam_area_sr
     int_flux_bg = float(np.sum(src_values - ave_bkg)) * pixel_area_sr / beam_area_sr
 
+    sigma_n = sigma * np.sqrt(nsrc_beam + (nsrc_beam ** 2) / nbkg_beam)
+    sigma_s = abs(int_flux_bg) * percent
+    sigma_tot = np.sqrt(sigma_n ** 2 + sigma_s ** 2)
+
+    print("Number of source pixels:", num)
+    print("Number of background pixels:", num_bkg)
     print("N_src_beam:", nsrc_beam)
     print("N_bkg_beam:", nbkg_beam)
-    print("sigma:", sigma)
-
-    sigma_n = sigma * np.sqrt(nsrc_beam + (nsrc_beam ** 2) / nbkg_beam)
-    print("sigma_N:", sigma_n)
-    sigma_s = abs(int_flux_bg) * percent
-    print("sigma_S:", sigma_s)
-    sigma_tot = np.sqrt(sigma_n ** 2 + sigma_s ** 2)
+    print("Background level (Jy/beam):", ave_bkg)
+    print("Background rms (Jy/beam):", sigma)
+    print("Integrated flux before background subtraction (Jy):", int_flux)
+    print("Integrated flux after background subtraction (Jy):", int_flux_bg)
+    print("sigma_N (Jy):", sigma_n)
+    print("sigma_S (Jy):", sigma_s)
+    print("sigma_tot (Jy):", sigma_tot)
 
     with open(all_data_name, "a+") as f1:
         print("Number of points: ", num, file=f1)
