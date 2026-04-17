@@ -14,7 +14,7 @@ from astropy.wcs.utils import proj_plane_pixel_area
 def parse_args():
     parser = argparse.ArgumentParser(description="Calculate integrated flux density from a FITS image and masks.")
     parser.add_argument("filename", help="FITS image filename, for example 'PN.i.image.fits'.")
-    parser.add_argument("-p", "--percent", type=float, default=0.05, help="Relative calibration error, for example 0.02.")
+    parser.add_argument("-p", "--percent", type=float, default=0.05, help="Relative calibration error, default=0.05.")
     parser.add_argument("--path", default=".", help="Directory containing the FITS file and mask files. Default: current directory.")
     return parser.parse_args()
 
