@@ -165,7 +165,7 @@ def main():
 
             # When a polygon is complete switch to the next mode
             if action == 'complete':
-                self.mode == 'src'
+                self.mode = 'src'
                 self.offsetsLol.append(self.offsets)
                 self.offsets = []
                 
