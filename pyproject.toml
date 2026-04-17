@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fits-flux-tools"
+version = "0.1.0"
+description = "Small CLI tools for FITS mask creation and integrated flux density measurement."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "Shengtao Wang" }
+]
+dependencies = [
+  "astropy",
+  "matplotlib",
+  "numpy",
+  "sphericalpolygon",
+]
+
+[project.scripts]
+polymask = "fits_flux_tools.polyMask:main"
+cal-int-flux-density = "fits_flux_tools.cal_int_flux_density:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
