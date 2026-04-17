@@ -35,6 +35,7 @@ Create masks:
 ```bash
 polymask NGC253.i.image.fits
 ```
+Note: When running polymask, you can adjust the color scale by clicking on the color bar. First, outline the target source, then click Mask and Save. After that, click Reset, select a background region free of bright sources, then click Mask and Save again.
 
 Measure integrated flux density in the current directory:
 
