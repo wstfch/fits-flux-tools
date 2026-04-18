@@ -31,7 +31,7 @@ pip uninstall fits-flux-tools
 
 ## Usage
 
-Create masks:
+### 1. Create masks:
 
 ```bash
 polymask NGC253.i.image.fits
@@ -41,7 +41,7 @@ Note: When running polymask, you can adjust the color scale by clicking on the
   Reset, select a background region free of bright sources, and click Save
   Background.
 
-Measure integrated flux density in the current directory:
+### 2. Measure integrated flux density in the current directory:
 
 ```bash
 cal-int-flux-density NGC253.i.image.fits
