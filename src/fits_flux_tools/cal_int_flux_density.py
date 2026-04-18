@@ -16,6 +16,8 @@ def parse_args():
     parser.add_argument("filename", help="FITS image filename, for example 'PN.i.image.fits'.")
     parser.add_argument("-p", "--percent", type=float, default=0.05, help="Relative calibration error, default=0.05.")
     parser.add_argument("--path", default=".", help="Directory containing the FITS file and mask files. Default: current directory.")
+    parser.add_argument("-s", "--src-mask", default=None, help="Optional source mask FITS file. Default: <filename>.mask_source.fits in --path.")
+    parser.add_argument("-b", "--bkg-mask", default=None, help="Optional background mask FITS file. Default: <filename>.mask_bakg.fits in --path.")
     return parser.parse_args()
 
 def load_fits_image(filename):
@@ -106,8 +108,10 @@ def main():
 
     filename = fits_filename[:-5]
     fits_name = os.path.join(base_path, fits_filename)
-    src_mask_fits_name = os.path.join(base_path, filename + ".mask_source.fits")
-    bkg_mask_fits_name = os.path.join(base_path, filename + ".mask_bakg.fits")
+    src_mask_fits_name = (os.path.abspath(args.src_mask) if args.src_mask is not None else os.path.join(base_path, filename + ".mask_source.fits"))
+    bkg_mask_fits_name = (os.path.abspath(args.bkg_mask) if args.bkg_mask is not None else os.path.join(base_path, filename + ".mask_bakg.fits"))
+    #src_mask_fits_name = os.path.join(base_path, filename + ".mask_source.fits")
+    #bkg_mask_fits_name = os.path.join(base_path, filename + ".mask_bakg.fits")
     all_data_name = os.path.join(base_path, "all.data")
     int_flux_data_name = os.path.join(base_path, "IntFlux.data")
 
@@ -122,10 +126,10 @@ def main():
     w = wcs.WCS(header)
     w_cel = w.celestial if w.has_celestial else w
 
-    if "BUNIT" in header:
-        print("BUNIT:", header["BUNIT"])
-    else:
-        print("Warning: BUNIT not found in FITS header. This script assumes the image is in Jy/beam.")
+   # if "BUNIT" in header:
+   #     print("BUNIT:", header["BUNIT"])
+   # else:
+   #     print("Warning: BUNIT not found in FITS header. This script assumes the image is in Jy/beam.")
 
     src_mask_fits = pf.getdata(src_mask_fits_name)
     bkg_mask_fits = pf.getdata(bkg_mask_fits_name)
@@ -172,17 +176,15 @@ def main():
     sigma_s = abs(int_flux_bg) * percent
     sigma_tot = np.sqrt(sigma_n ** 2 + sigma_s ** 2)
 
-    print("Number of source pixels:", num)
-    print("Number of background pixels:", num_bkg)
-    print("N_src_beam:", nsrc_beam)
-    print("N_bkg_beam:", nbkg_beam)
-    print("Background level (Jy/beam):", ave_bkg)
-    print("Background rms (Jy/beam):", sigma)
-    print("Integrated flux before background subtraction (Jy):", int_flux)
-    print("Integrated flux after background subtraction (Jy):", int_flux_bg)
-    print("sigma_N (Jy):", sigma_n)
-    print("sigma_S (Jy):", sigma_s)
-    print("sigma_tot (Jy):", sigma_tot)
+    #print("Number of source pixels:", num)
+    #print("Number of background pixels:", num_bkg)
+    print("Background level:", ave_bkg)
+    print("Background rms:", sigma)
+    print("Integrated flux before background subtraction:", int_flux)
+    print("Integrated flux after background subtraction:", int_flux_bg)
+    #print("sigma_N:", sigma_n)
+    #print("sigma_S:", sigma_s)
+    print("The error:", sigma_tot)
 
     with open(all_data_name, "a+") as f1:
         print("Number of points: ", num, file=f1)
