@@ -47,10 +47,10 @@ Measure integrated flux density in the current directory:
 cal-int-flux-density NGC253.i.image.fits
 ```
 
-Measure with explicit calibration error and path:
+Measure with explicit calibration error, path, source-mask and background-mask:
 
 ```bash
-cal-int-flux-density NGC253.i.image.fits --percent 0.02 --path /path/to/data
+cal-int-flux-density NGC253.i.image.fits --percent 0.1 --path /path/to/data -s /path/to/data/NGC253.i.image.mask_source.fits -b /path/to/data/NGC253.i.image.mask_bakg.fits
 ```
 
 ## Expected Files
