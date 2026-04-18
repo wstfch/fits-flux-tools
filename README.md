@@ -41,6 +41,12 @@ Note: When running polymask, you can adjust the color scale by clicking on the
   Reset, select a background region free of bright sources, and click Save
   Background.
 
+If needed, polymask can also export the selected source and background regions as DS9 region files by using:
+
+```bash
+polymask NGC253.i.image.fits --save_reg
+````
+
 ### 2. Measure integrated flux density in the current directory:
 
 ```bash
