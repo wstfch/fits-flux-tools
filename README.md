@@ -55,13 +55,6 @@ cal-int-flux-density NGC253.i.image.fits --percent 0.1 --path /path/to/data -s /
 
 ## Expected Files
 
-For an input image `NGC253.i.image.fits`, `cal-int-flux-density` expects:
-
-- `NGC253.i.image.mask.source.fk5.reg`
-- `NGC253.i.image.mask.bakg.fk5.reg`
-- `NGC253.i.image.mask_source.fits`
-- `NGC253.i.image.mask_bakg.fits`
-
 Output files are written to the selected `--path` directory:
 
 - `all.data`
