@@ -10,6 +10,7 @@
 # MODIFIED: Shengtao Wang                                                     #
 #                                                                             #
 #=============================================================================#
+import argparse
 import os, sys, re
 from matplotlib.collections import RegularPolyCollection
 from matplotlib.collections import PatchCollection
@@ -25,14 +26,14 @@ import json
 matplotlib.use('QtAgg')
 #-----------------------------------------------------------------------------#
 def main():
+    parser = argparse.ArgumentParser(description="Draw source/background polygons on a FITS image and save mask files.")
+    parser.add_argument("filename", help="FITS image filename.")
+    parser.add_argument("--save_reg", action="store_true", help="Also save DS9 region files (*.image.reg and *.fk5/*.galactic.reg).")
 
     # Load the FILE file
-    args = sys.argv[1:]
-    if len(args)<1:
-        print("\n\tUSAGE: polyMask.py <filename>\n")
-        sys.exit(0)
-    else:
-        fitsName = args[0]
+    args = parser.parse_args()
+    fitsName = args.filename
+    save_reg = args.save_reg
     [header,xydata]=load_fits_image(fitsName)
 
     stripHeadKeys = ['PC1_1','PC1_2','PC2_1','PC2_2','PC3_1','PC3_2','PC4_1','PC4_2']
@@ -216,6 +217,9 @@ def main():
             pf.writeto(outName, mask, header, overwrite=True)
             print("done.")
             sys.stdout.flush()
+
+            if not save_reg:
+                return
 
             # ---------- 1) write to image coord .reg（pixel value，DS9 image，1-based） ----------
             img_reg = nameRoot + f'{stem}.image.reg'
