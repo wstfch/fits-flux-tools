@@ -9,7 +9,7 @@ description = "Small CLI tools for FITS mask creation and integrated flux densit
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
-  { name = "Shengtao Wang" }
+  { name = "Shengtao Wang", email = "149463756+wstfch@users.noreply.github.com" }
 ]
 dependencies = [
   "astropy",
@@ -19,6 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
+fits-flux-tools = "fits_flux_tools.cli:main"
 polymask = "fits_flux_tools.polyMask:main"
 cal-int-flux-density = "fits_flux_tools.cal_int_flux_density:main"
 
@@ -27,4 +28,3 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

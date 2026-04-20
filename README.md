@@ -31,6 +31,15 @@ pip uninstall fits-flux-tools
 
 ## Usage
 
+### Package metadata
+
+After installation, you can inspect the package metadata from the top-level CLI:
+
+```bash
+fits-flux-tools --help
+fits-flux-tools --version
+```
+
 ### 1. Create masks:
 
 ```bash
@@ -66,4 +75,3 @@ Output files are written to the selected `--path` directory:
 - `all.data`
 - `IntFlux.data`  
 Note: In 'IntFlux.data', the first and second columns are the integrated flux densities before and after background subtraction, respectively. The third column gives the local image rms measured from the background region, and the fourth column gives the total uncertainty, including both the relative calibration uncertainty and the image-noise term.
-
