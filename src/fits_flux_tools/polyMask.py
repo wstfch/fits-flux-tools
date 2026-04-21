@@ -26,27 +26,11 @@ import json
 matplotlib.use('QtAgg')
 #-----------------------------------------------------------------------------#
 def main():
-    parser = argparse.ArgumentParser(
-        description="Draw source/background polygons on a FITS image and save mask files."
-    )
+    parser = argparse.ArgumentParser(description="Draw source/background polygons on a FITS image and save mask files.")
     parser.add_argument("filename", help="FITS image filename.")
-    parser.add_argument(
-        "--save_reg",
-        action="store_true",
-        help="Also save DS9 region files (*.image.reg and *.fk5/*.galactic.reg).",
-    )
-    parser.add_argument(
-        "--rms",
-        type=float,
-        default=None,
-        help="Noise level used to draw a contour. Contour is only shown when this is provided.",
-    )
-    parser.add_argument(
-        "--t_rms",
-        type=float,
-        default=3.0,
-        help="Contour level in units of rms. Default: 3.",
-    )
+    parser.add_argument("--save_reg", action="store_true", help="Also save DS9 region files (*.image.reg and *.fk5/*.galactic.reg).")
+    parser.add_argument("--rms", type=float, default=None, help="Noise level used to draw a contour. Contour is only shown when this is provided.")
+    parser.add_argument("--t_rms", type=float, default=3.0, help="Contour level in units of rms. Default: 3.")
 
     # Load the FILE file
     args = parser.parse_args()
@@ -85,13 +69,7 @@ def main():
                         cmap=cm.jet,vmin=zmin,vmax=zmax)
     if rms is not None:
         contour_level = t_rms * rms
-        axplot.contour(
-            np.ma.masked_invalid(xydata),
-            levels=[contour_level],
-            colors='black',
-            linewidths=1.0,
-            origin='lower'
-        )
+        axplot.contour(np.ma.masked_invalid(xydata), levels=[contour_level], colors='black', linewidths=1.0, origin='lower')
     cbar=colorbar(cax,pad=0.0)
 
     # Add the buttons to the bottom edge
