@@ -7,7 +7,7 @@
 #           save polygons to a text file.                                     #
 #                                                                             #
 # WRITTEN:  Cormac Purcell                                                    #
-# MODIFIED: Shengtao Wang                                                     #
+# MODIFIED: Shengtao Wang                                                       #
 #                                                                             #
 #=============================================================================#
 import argparse
@@ -26,14 +26,34 @@ import json
 matplotlib.use('QtAgg')
 #-----------------------------------------------------------------------------#
 def main():
-    parser = argparse.ArgumentParser(description="Draw source/background polygons on a FITS image and save mask files.")
+    parser = argparse.ArgumentParser(
+        description="Draw source/background polygons on a FITS image and save mask files."
+    )
     parser.add_argument("filename", help="FITS image filename.")
-    parser.add_argument("--save_reg", action="store_true", help="Also save DS9 region files (*.image.reg and *.fk5/*.galactic.reg).")
+    parser.add_argument(
+        "--save_reg",
+        action="store_true",
+        help="Also save DS9 region files (*.image.reg and *.fk5/*.galactic.reg).",
+    )
+    parser.add_argument(
+        "--rms",
+        type=float,
+        default=None,
+        help="Noise level used to draw a contour. Contour is only shown when this is provided.",
+    )
+    parser.add_argument(
+        "--t_rms",
+        type=float,
+        default=3.0,
+        help="Contour level in units of rms. Default: 3.",
+    )
 
     # Load the FILE file
     args = parser.parse_args()
     fitsName = args.filename
     save_reg = args.save_reg
+    rms = args.rms
+    t_rms = args.t_rms
     [header,xydata]=load_fits_image(fitsName)
 
     stripHeadKeys = ['PC1_1','PC1_2','PC2_1','PC2_2','PC3_1','PC3_2','PC4_1','PC4_2']
@@ -63,6 +83,15 @@ def main():
     # Plot the image data and colorbar
     cax = axplot.imshow(xydata, interpolation='nearest', origin='lower',
                         cmap=cm.jet,vmin=zmin,vmax=zmax)
+    if rms is not None:
+        contour_level = t_rms * rms
+        axplot.contour(
+            np.ma.masked_invalid(xydata),
+            levels=[contour_level],
+            colors='black',
+            linewidths=1.0,
+            origin='lower'
+        )
     cbar=colorbar(cax,pad=0.0)
 
     # Add the buttons to the bottom edge
@@ -402,4 +431,5 @@ def load_fits_image(filename):
 
 if __name__ == "__main__":
     main()
+
 
