@@ -54,13 +54,16 @@ Note: When running polymask, you can adjust the color scale by clicking on the
   Background.
 
 Output files:
+
     Save Source:
+    
       <name>.mask_source.fits
       and, if --save_reg is set:
       <name>.mask.source.image.reg
       <name>.mask.source.fk5.reg  or  <name>.mask.source.galactic.reg
 
     Save Background:
+    
       <name>.mask_bakg.fits
       and, if --save_reg is set:
       <name>.mask.bakg.image.reg
