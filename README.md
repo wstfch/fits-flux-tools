@@ -42,20 +42,29 @@ fits-flux-tools --version
 ```
 
 ### 1. Create masks:
-
+Example:
 ```bash
 polymask NGC253.i.image.fits
+polymask NGC253.i.image.fits --save_reg
+polymask NGC253.i.image.fits --rms 0.000016 --t_rms 5 --save_reg
 ```
 Note: When running polymask, you can adjust the color scale by clicking on the
   color bar. First, outline the target source, then click Save Source. Next, click
   Reset, select a background region free of bright sources, and click Save
   Background.
 
-If needed, polymask can also export the selected source and background regions as DS9 region files by using:
+Output files:
+    Save Source:
+      <name>.mask_source.fits
+      and, if --save_reg is set:
+      <name>.mask.source.image.reg
+      <name>.mask.source.fk5.reg  or  <name>.mask.source.galactic.reg
 
-```bash
-polymask NGC253.i.image.fits --save_reg
-````
+    Save Background:
+      <name>.mask_bakg.fits
+      and, if --save_reg is set:
+      <name>.mask.bakg.image.reg
+      <name>.mask.bakg.fk5.reg  or  <name>.mask.bakg.galactic.reg
 
 ### 2. Measure integrated flux density in the current directory:
 
