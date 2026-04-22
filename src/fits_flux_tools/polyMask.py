@@ -250,7 +250,7 @@ def main():
             with open(wld_reg, 'w') as f:
                 f.write('# Region file format: DS9 version 4.1\n')
                 f.write(f'{world_sys}\n')  # fk5 or galactic
-                world = w.wcs_pix2world(np.array(poly), 0)  # Nx2 数组
+                world = w.wcs_pix2world(np.array(poly), 0)  
                 pts = ','.join(f'{a:.7f},{b:.7f}' for a, b in world)
                 f.write(f'polygon({pts})\n')
 
